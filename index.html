@@ -34,7 +34,7 @@ html,body{
 }
 body{display:grid;place-items:center;}
 
-/* ============ 啟動畫面（仿原生 Splash） ============ */
+/* ============ 啟動畫面 ============ */
 #splash{
   position:fixed;inset:0;z-index:9999;
   display:flex;flex-direction:column;
@@ -83,7 +83,7 @@ body{display:grid;place-items:center;}
   40%{transform:scale(1.45);opacity:1;}
 }
 
-/* ============ 手機外框 9:16 ============ */
+/* ============ 手機外框 ============ */
 #phone{
   position:relative;
   width:min(100vw,56.25vh);
@@ -94,7 +94,6 @@ body{display:grid;place-items:center;}
   box-shadow:0 30px 90px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);
   isolation:isolate;
 }
-/* 在獨立模式下（已加到主畫面）不顯示手機外框 */
 @media (display-mode: standalone){
   #phone{
     width:100vw;height:100vh;
@@ -623,7 +622,7 @@ body{display:grid;place-items:center;}
 
 <script>
 /* =========================================================
-   動態產生 App 圖標（PWA 用）—— 無需上傳 PNG
+   動態產生 App 圖標
    ========================================================= */
 function roundRect(ctx, x, y, w, h, r){
   ctx.beginPath();
@@ -650,7 +649,6 @@ function makeIcon(size){
   g.fillStyle = grad;
   roundRect(g, 0, 0, size, size, size * 0.22);
   g.fill();
-  // 白色打勾
   g.strokeStyle = '#FFFFFF';
   g.lineWidth = size * 0.09;
   g.lineCap = 'round';
@@ -667,7 +665,6 @@ function setupPWA(){
   const icon192 = makeIcon(192);
   const icon512 = makeIcon(512);
 
-  /* Manifest —— 動態以 Blob 生成，不需要外部檔案 */
   const manifest = {
     name: '簽到',
     short_name: '簽到',
@@ -696,7 +693,6 @@ function setupPWA(){
     link.href = url;
   }catch(e){}
 
-  /* Apple Touch Icon —— 從主屏幕啟動時的圖標 */
   document.querySelectorAll('link[rel="apple-touch-icon"],link[rel="apple-touch-icon-precomposed"]')
     .forEach(el => el.remove());
   const ati = document.createElement('link');
@@ -704,7 +700,6 @@ function setupPWA(){
   ati.href = icon192;
   document.head.appendChild(ati);
 
-  /* Favicon */
   document.querySelectorAll('link[rel="icon"],link[rel="shortcut icon"]').forEach(el => el.remove());
   const fav = document.createElement('link');
   fav.rel = 'icon';
@@ -1078,32 +1073,51 @@ function render(){
   grid.appendChild(frag);
 }
 
+/* =========================================================
+   卡片事件（pointer 版本，快速連點也不會失效）
+   ========================================================= */
 function attachCardEvents(card, s){
-  let pressed = false;
+  let active = false;
+  let downX = 0, downY = 0;
 
-  card.addEventListener('pointerdown', () => {
+  card.addEventListener('pointerdown', (e) => {
     if(s.time) return;
-    pressed = true;
+    if(e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
+    active = true;
+    downX = e.clientX;
+    downY = e.clientY;
     card.classList.add('pressing');
     Sound.press();
     vibrate(8);
+    try{ card.setPointerCapture(e.pointerId); }catch(_){}
   });
 
-  const release = () => {
-    if(!pressed) return;
-    pressed = false;
+  card.addEventListener('pointerup', (e) => {
+    if(!active) return;
+    active = false;
     card.classList.remove('pressing');
-  };
-  card.addEventListener('pointerup', release);
-  card.addEventListener('pointercancel', release);
-  card.addEventListener('pointerleave', release);
 
-  card.addEventListener('click', (e) => {
-    e.preventDefault();
+    /* 位移超過 12px 視為滑動，不觸發簽到 */
+    if(Math.abs(e.clientX - downX) > 12 || Math.abs(e.clientY - downY) > 12) return;
     if(s.time) return;
-    card.classList.remove('pressing');
+
     doSignIn(card, s);
   });
+
+  card.addEventListener('pointercancel', () => {
+    active = false;
+    card.classList.remove('pressing');
+  });
+
+  card.addEventListener('lostpointercapture', () => {
+    if(active){
+      active = false;
+      card.classList.remove('pressing');
+    }
+  });
+
+  /* 防止長按彈出系統選單 */
+  card.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
 /* =========================================================
@@ -1445,15 +1459,7 @@ function bindUI(){
   window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 260));
   document.addEventListener('gesturestart', e => e.preventDefault());
 
-  /* 雙擊縮放封鎖（iOS 15+ 有時仍可縮放） */
-  let lastTouchEnd = 0;
-  document.addEventListener('touchend', (e) => {
-    const now = Date.now();
-    if(now - lastTouchEnd <= 300) e.preventDefault();
-    lastTouchEnd = now;
-  }, { passive:false });
-
-  /* 畫面回到前景時，重新繪製一次（iOS 常常恢復後顯示異常） */
+  /* 畫面回到前景時重繪 */
   document.addEventListener('visibilitychange', () => {
     if(!document.hidden){
       resizeCanvas();
@@ -1463,7 +1469,7 @@ function bindUI(){
 }
 
 /* =========================================================
-   註冊 Service Worker（如果同目錄有 sw.js）
+   註冊 Service Worker
    ========================================================= */
 function registerSW(){
   if(!('serviceWorker' in navigator)) return;
@@ -1505,7 +1511,6 @@ function registerSW(){
   updateHud();
   updateUndoBtn();
 
-  /* 隱藏啟動畫面 */
   const wait = storageOK ? 480 : 900;
   setTimeout(() => {
     splash.classList.add('hide');
