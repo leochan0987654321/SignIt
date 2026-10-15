@@ -522,6 +522,32 @@ body{display:grid;place-items:center;}
   transition:opacity .34s ease,transform .38s cubic-bezier(.34,1.56,.64,1);
 }
 #toast.show{opacity:1;transform:translate(-50%,0) scale(1);}
+
+/* ============ 更新提示條 ============ */
+#updateBar{
+  position:absolute;left:50%;
+  top:calc(14px + env(safe-area-inset-top));
+  z-index:400;
+  transform:translate(-50%,-140%) scale(.9);
+  background:linear-gradient(160deg,#7FB4FF,#2F6FE4);
+  color:#fff;font-size:12.5px;font-weight:900;letter-spacing:.04em;
+  padding:10px 20px;border-radius:999px;
+  display:flex;align-items:center;gap:8px;
+  white-space:nowrap;pointer-events:none;opacity:0;
+  box-shadow:0 8px 24px rgba(47,111,228,.42);
+  transition:opacity .34s ease,transform .38s cubic-bezier(.34,1.56,.64,1);
+}
+#updateBar.show{
+  opacity:1;pointer-events:auto;
+  transform:translate(-50%,0) scale(1);
+}
+#updateBar .spin{
+  width:13px;height:13px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.35);
+  border-top-color:#fff;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -539,6 +565,12 @@ body{display:grid;place-items:center;}
 
 <div id="phone">
   <canvas id="fx"></canvas>
+
+  <!-- 更新提示條 -->
+  <div id="updateBar">
+    <span class="spin"></span>
+    <span id="updateText">正在更新…</span>
+  </div>
 
   <main class="view" id="viewMain">
     <div class="hud" id="hud">
@@ -898,6 +930,8 @@ const mask        = document.getElementById('mask');
 const btnUndo     = document.getElementById('btnUndo');
 const fileInput   = document.getElementById('fileInput');
 const splash      = document.getElementById('splash');
+const updateBar   = document.getElementById('updateBar');
+const updateText  = document.getElementById('updateText');
 
 let CW = 0, CH = 0;
 
@@ -1074,7 +1108,7 @@ function render(){
 }
 
 /* =========================================================
-   卡片事件（pointer 版本，快速連點也不會失效）
+   卡片事件（pointer 版本）
    ========================================================= */
 function attachCardEvents(card, s){
   let active = false;
@@ -1097,7 +1131,6 @@ function attachCardEvents(card, s){
     active = false;
     card.classList.remove('pressing');
 
-    /* 位移超過 12px 視為滑動，不觸發簽到 */
     if(Math.abs(e.clientX - downX) > 12 || Math.abs(e.clientY - downY) > 12) return;
     if(s.time) return;
 
@@ -1116,7 +1149,6 @@ function attachCardEvents(card, s){
     }
   });
 
-  /* 防止長按彈出系統選單 */
   card.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
@@ -1459,7 +1491,6 @@ function bindUI(){
   window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 260));
   document.addEventListener('gesturestart', e => e.preventDefault());
 
-  /* 畫面回到前景時重繪 */
   document.addEventListener('visibilitychange', () => {
     if(!document.hidden){
       resizeCanvas();
@@ -1469,16 +1500,58 @@ function bindUI(){
 }
 
 /* =========================================================
-   註冊 Service Worker
+   Service Worker —— 帶自動更新
    ========================================================= */
+function showUpdateBar(msg){
+  if(!updateBar) return;
+  updateText.textContent = msg || '正在更新…';
+  updateBar.classList.add('show');
+}
+
 function registerSW(){
   if(!('serviceWorker' in navigator)) return;
   if(location.protocol !== 'https:' && location.hostname !== 'localhost') return;
 
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js', { scope:'./' })
-      .then(() => console.log('✓ SW 已註冊，離線可用'))
+      .then(reg => {
+        console.log('✓ SW 已註冊');
+
+        /* 每次啟動主動檢查有沒有新版 */
+        reg.update().catch(()=>{});
+
+        /* 若已有 waiting 的 SW，立即讓它接管 */
+        if(reg.waiting && navigator.serviceWorker.controller){
+          showUpdateBar('發現新版本，正在套用…');
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+
+        /* 監聽是否有新版本在安裝 */
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if(!nw) return;
+
+          nw.addEventListener('statechange', () => {
+            if(nw.state === 'installed' && navigator.serviceWorker.controller){
+              /* 新版本已下載完成，通知它跳過等待 → 觸發 controllerchange */
+              showUpdateBar('發現新版本，正在套用…');
+              try{ nw.postMessage({ type: 'SKIP_WAITING' }); }catch(_){}
+            }
+          });
+        });
+      })
       .catch(err => console.log('SW 註冊失敗：', err.message));
+
+    /* 新 SW 接管時刷新一次頁面，只刷一次避免循環 */
+    let refreshed = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if(refreshed) return;
+      refreshed = true;
+      showUpdateBar('更新完成，重新載入…');
+      setTimeout(() => {
+        try{ window.location.reload(); }catch(_){}
+      }, 420);
+    });
   });
 }
 
