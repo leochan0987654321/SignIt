@@ -454,6 +454,22 @@ body{display:grid;place-items:center;}
   text-overflow:ellipsis;
   white-space:nowrap;
 }
+
+/* 返回按鈕 */
+.back-btn{
+  border:none;
+  width:36px;height:36px;
+  border-radius:50%;
+  background:#EAF2FF;
+  color:#2563EB;
+  display:grid;place-items:center;
+  cursor:pointer;
+  flex:0 0 auto;
+  transition:transform .15s cubic-bezier(.34,1.56,.64,1),background .15s;
+}
+.back-btn:active{transform:scale(.9);background:#DBE8FF;}
+.back-btn svg{width:18px;height:18px;}
+
 .chip{
   border:none;font-family:inherit;
   background:linear-gradient(160deg,#7FB4FF,#2F6FE4);
@@ -602,7 +618,7 @@ body{display:grid;place-items:center;}
 }
 .class-item.active .class-check svg{opacity:1;}
 
-/* ============ 班級管理項 ============ */
+/* ============ 班級管理列表項 ============ */
 .class-row .sname{
   font-size:15.5px;
 }
@@ -614,6 +630,18 @@ body{display:grid;place-items:center;}
   white-space:nowrap;
   padding-right:2px;
 }
+
+/* ============ 班級 Sheet 內部模式切換（修正版） ============ */
+/* 管理模式元素預設隱藏 */
+#classSheet .mode-manage{display:none !important;}
+
+/* 切到管理模式：隱藏選擇模式元素 */
+#classSheet.manage .mode-select{display:none !important;}
+
+/* 管理模式元素以正確的 display 型別顯示 */
+#classSheet.manage .sheet-head.mode-manage{display:flex !important;}
+#classSheet.manage .sheet-list.mode-manage{display:block !important;}
+#classSheet.manage .sheet-foot.mode-manage{display:flex !important;}
 
 /* ============ 確認彈窗 ============ */
 .mask{
@@ -768,28 +796,40 @@ body{display:grid;place-items:center;}
     </div>
   </main>
 
-  <!-- ========== 班級選擇浮層 ========== -->
+  <!-- ========== 班級浮層（選擇 + 管理，同一個 sheet） ========== -->
   <section class="sheet" id="classSheet">
-    <header class="sheet-head">
+    <!-- 選擇模式：標題列 -->
+    <header class="sheet-head mode-select">
       <div>
         <h2>選擇班級</h2>
       </div>
     </header>
-    <div class="sheet-list" id="classList"></div>
-    <div class="sheet-foot">
-      <button class="big-btn" id="btnManageClasses">管理班級</button>
-    </div>
-  </section>
 
-  <!-- ========== 班級管理浮層 ========== -->
-  <section class="sheet" id="viewClassManage">
-    <header class="sheet-head">
-      <div>
+    <!-- 管理模式：標題列（含返回） -->
+    <header class="sheet-head mode-manage">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <button class="back-btn" id="btnBackFromManage" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
         <h2>管理班級</h2>
       </div>
     </header>
-    <div class="sheet-list" id="classManageList"></div>
-    <div class="sheet-foot">
+
+    <!-- 選擇模式：列表 -->
+    <div class="sheet-list mode-select" id="classList"></div>
+
+    <!-- 管理模式：列表 -->
+    <div class="sheet-list mode-manage" id="classManageList"></div>
+
+    <!-- 選擇模式：底部 -->
+    <div class="sheet-foot mode-select">
+      <button class="big-btn" id="btnManageClasses">管理班級</button>
+    </div>
+
+    <!-- 管理模式：底部 -->
+    <div class="sheet-foot mode-manage">
       <div class="backup-row">
         <button class="bak-btn" id="btnAddClass">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
@@ -1073,7 +1113,6 @@ function openDB(){
         d.createObjectStore(STORE_META, { keyPath: 'key' });
       }
 
-      /* 從舊版 v1 的 students store 遷移資料 */
       if(e.oldVersion < 2 && d.objectStoreNames.contains('students')){
         const oldStore = tx.objectStore('students');
         const oldReq = oldStore.getAll();
@@ -1226,7 +1265,6 @@ const viewSettings= document.getElementById('viewSettings');
 const studentList = document.getElementById('studentList');
 const classSheet  = document.getElementById('classSheet');
 const classList   = document.getElementById('classList');
-const viewClassManage = document.getElementById('viewClassManage');
 const classManageList = document.getElementById('classManageList');
 const mask        = document.getElementById('mask');
 const confirmMask = document.getElementById('confirmMask');
@@ -1835,10 +1873,25 @@ async function deleteClass(id){
 }
 
 /* =========================================================
-   Sheet 開關
+   Sheet 開關 + 班級 Sheet 內模式切換
    ========================================================= */
 function openSheet(sheet){ sheet.classList.add('open'); }
-function closeSheet(sheet){ sheet.classList.remove('open'); }
+function closeSheet(sheet){
+  sheet.classList.remove('open');
+  if(sheet === classSheet){
+    classSheet.classList.remove('manage');
+  }
+}
+
+function showManageMode(){
+  renderClassManageList();
+  classSheet.classList.add('manage');
+}
+
+function showSelectMode(){
+  renderClassList();
+  classSheet.classList.remove('manage');
+}
 
 /* =========================================================
    匯出：單一班級
@@ -1846,7 +1899,6 @@ function closeSheet(sheet){ sheet.classList.remove('open'); }
 function exportClassFile(cls){
   if(!cls) return;
 
-  /* 若為當前班級，先同步 students 以確保最新 */
   if(cls.id === currentClassId) cls.students = students;
 
   const data = JSON.stringify({
@@ -1883,12 +1935,11 @@ function exportClassFile(cls){
 }
 
 /* =========================================================
-   匯入：從 JSON 中提取班級列表
+   匯入：解析
    ========================================================= */
 function extractClasses(parsed){
   if(!parsed) return [];
 
-  /* 新格式：{ class: { name, students } } */
   if(parsed.class && Array.isArray(parsed.class.students)){
     return [{
       name: parsed.class.name || '匯入班級',
@@ -1896,7 +1947,6 @@ function extractClasses(parsed){
     }];
   }
 
-  /* 舊完整格式：{ classes: [...] } */
   if(Array.isArray(parsed.classes)){
     return parsed.classes
       .filter(c => c && Array.isArray(c.students))
@@ -1906,7 +1956,6 @@ function extractClasses(parsed){
       }));
   }
 
-  /* 舊格式：{ students: [...] } */
   if(Array.isArray(parsed.students)){
     return [{
       name: parsed.name || '匯入班級',
@@ -1914,7 +1963,6 @@ function extractClasses(parsed){
     }];
   }
 
-  /* 直接是陣列 */
   if(Array.isArray(parsed)){
     return [{ name: '匯入班級', students: parsed }];
   }
@@ -1962,7 +2010,6 @@ function handleImportFile(file, mode){
         () => doReplaceStudents(newStudents)
       );
     }else{
-      /* new-class：一次匯入所有解析出的班級 */
       doAddClasses(parsedClasses);
     }
   };
@@ -2117,23 +2164,27 @@ function bindUI(){
   document.getElementById('btnClass').addEventListener('click', () => {
     Sound.press();
     vibrate(8);
-    renderClassList();
+    showSelectMode();
     openSheet(classSheet);
   });
 
-  /* --- 進入班級管理 --- */
+  /* --- 切換到管理模式（同一個 sheet 內） --- */
   document.getElementById('btnManageClasses').addEventListener('click', () => {
     Sound.press();
-    closeSheet(classSheet);
-    setTimeout(() => {
-      renderClassManageList();
-      openSheet(viewClassManage);
-    }, 320);
+    vibrate(8);
+    showManageMode();
   });
 
+  /* --- 從管理模式返回選擇模式 --- */
+  document.getElementById('btnBackFromManage').addEventListener('click', () => {
+    Sound.press();
+    showSelectMode();
+  });
+
+  /* --- 管理模式的「完成」：直接關閉 sheet --- */
   document.getElementById('btnCloseClassManage').addEventListener('click', () => {
     Sound.press();
-    closeSheet(viewClassManage);
+    closeSheet(classSheet);
     updateClassLabel();
   });
 
