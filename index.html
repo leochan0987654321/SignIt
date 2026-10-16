@@ -125,7 +125,7 @@ body{display:grid;place-items:center;}
   display:flex;flex-direction:column;
 }
 
-/* ============ 頂部進度 ============ */
+/* ============ 頂部（班級 + 進度） ============ */
 #viewMain{
   padding:
     calc(16px + env(safe-area-inset-top))
@@ -135,6 +135,48 @@ body{display:grid;place-items:center;}
   gap:12px;
 }
 
+.topbar{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex:0 0 auto;
+}
+
+.class-btn{
+  border:none;
+  font-family:inherit;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-radius:999px;
+  padding:9px 11px 9px 14px;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  color:#2563EB;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.02em;
+  box-shadow:0 6px 20px rgba(59,130,246,.13),inset 0 0 0 1px rgba(255,255,255,.75);
+  cursor:pointer;
+  max-width:132px;
+  min-width:70px;
+  flex:0 0 auto;
+  transition:transform .15s cubic-bezier(.34,1.56,.64,1);
+}
+.class-btn:active{transform:scale(.95);}
+.class-btn .label{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  flex:1;
+  min-width:0;
+  text-align:left;
+}
+.class-btn svg{
+  flex:0 0 auto;
+  opacity:.75;
+}
+
 .hud{
   display:flex;align-items:center;gap:11px;
   background:rgba(255,255,255,.9);
@@ -142,7 +184,8 @@ body{display:grid;place-items:center;}
   border-radius:999px;
   padding:9px 16px 9px 15px;
   box-shadow:0 6px 20px rgba(59,130,246,.13),inset 0 0 0 1px rgba(255,255,255,.75);
-  flex:0 0 auto;
+  flex:1;
+  min-width:0;
   transition:box-shadow .4s ease;
 }
 .hud.complete{box-shadow:0 6px 26px rgba(59,130,246,.42),inset 0 0 0 1.5px rgba(59,130,246,.38);}
@@ -179,6 +222,24 @@ body{display:grid;place-items:center;}
   grid-template-columns:repeat(5,1fr);
   gap:8px;
   align-content:start;
+}
+
+.empty-state{
+  grid-column:1 / -1;
+  text-align:center;
+  padding:60px 20px;
+  color:#8CA6CE;
+}
+.empty-state .em-title{
+  font-size:15px;
+  font-weight:900;
+  color:#5E90D6;
+  margin-bottom:8px;
+}
+.empty-state .em-sub{
+  font-size:12.5px;
+  font-weight:700;
+  line-height:1.5;
 }
 
 /* ============ 學生卡片 ============ */
@@ -359,7 +420,7 @@ body{display:grid;place-items:center;}
   box-shadow:0 1px 0 #2258C0,0 3px 8px rgba(47,111,228,.24);
 }
 
-/* ============ 設定頁 ============ */
+/* ============ Sheet（浮層頁）通用 ============ */
 .sheet{
   position:absolute;inset:0;z-index:100;
   background:linear-gradient(180deg,#FFFFFF 0%,#F1F7FF 100%);
@@ -377,10 +438,21 @@ body{display:grid;place-items:center;}
 
 .sheet-head{
   display:flex;align-items:center;justify-content:space-between;
-  padding:4px 4px 14px;flex:0 0 auto;
+  padding:4px 4px 14px;flex:0 0 auto;gap:10px;
 }
 .sheet-head h2{
   margin:0;font-size:19px;font-weight:900;color:#1B3A75;letter-spacing:.02em;
+}
+.sheet-head > div{min-width:0;}
+.sheet-sub{
+  margin:3px 0 0;
+  font-size:12px;
+  font-weight:800;
+  color:#8CA6CE;
+  letter-spacing:.02em;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 .chip{
   border:none;font-family:inherit;
@@ -390,6 +462,7 @@ body{display:grid;place-items:center;}
   box-shadow:0 3px 0 #2258C0,0 6px 14px rgba(47,111,228,.28);
   cursor:pointer;letter-spacing:.05em;
   transition:transform .15s cubic-bezier(.34,1.56,.64,1),box-shadow .15s;
+  flex:0 0 auto;
 }
 .chip:active{transform:translateY(2px) scale(.97);box-shadow:0 1px 0 #2258C0;}
 
@@ -427,16 +500,25 @@ body{display:grid;place-items:center;}
 .srow .snum:focus{background:#DBE8FF;box-shadow:0 0 0 2px rgba(59,130,246,.30);}
 .srow .sname:focus{background:#F2F7FF;border-radius:10px;}
 
-.srow .sdel{
+/* 小圓按鈕（刪除 / 匯出） */
+.srow .sdel,
+.srow .sexport{
   width:32px;height:32px;flex:0 0 auto;
   border:none;border-radius:50%;
-  background:#FFEDE8;color:#FF7A5C;
   font-size:15px;font-weight:900;line-height:1;
   display:grid;place-items:center;cursor:pointer;
   font-family:inherit;
   transition:transform .15s cubic-bezier(.34,1.56,.64,1),background .15s;
 }
+.srow .sdel{
+  background:#FFEDE8;color:#FF7A5C;
+}
 .srow .sdel:active{transform:scale(.85);background:#FFDCD2;}
+.srow .sexport{
+  background:#EAF2FF;color:#2563EB;
+}
+.srow .sexport:active{transform:scale(.85);background:#DBE8FF;}
+.srow .sexport svg{width:15px;height:15px;}
 
 .sheet-foot{flex:0 0 auto;padding-top:10px;display:flex;flex-direction:column;gap:10px;}
 
@@ -463,6 +545,75 @@ body{display:grid;place-items:center;}
   transition:transform .17s cubic-bezier(.34,1.56,.64,1),box-shadow .17s;
 }
 .big-btn:active{transform:translateY(3px) scale(.99);box-shadow:0 1px 0 #2258C0;}
+
+/* ============ 班級選擇列表項 ============ */
+.class-item{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:15px 16px;
+  background:#fff;
+  border-radius:16px;
+  margin-bottom:8px;
+  box-shadow:0 2px 10px rgba(59,130,246,.10),inset 0 0 0 1px rgba(219,232,255,.9);
+  cursor:pointer;
+  transition:transform .15s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;
+  animation:rowIn .3s ease backwards;
+}
+.class-item:active{transform:scale(.98);}
+.class-item.active{
+  box-shadow:0 3px 14px rgba(59,130,246,.22),inset 0 0 0 2px #5A9BFB;
+}
+.class-item .class-name{
+  flex:1;
+  font-size:15px;
+  font-weight:900;
+  color:#1B3A75;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  min-width:0;
+}
+.class-item .class-count{
+  font-size:12.5px;
+  font-weight:800;
+  color:#8CA6CE;
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+.class-item .class-check{
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  color:#fff;
+  background:transparent;
+  flex:0 0 auto;
+  transition:background .2s;
+}
+.class-item.active .class-check{
+  background:linear-gradient(160deg,#7FB4FF,#2F6FE4);
+  box-shadow:0 2px 6px rgba(47,111,228,.32);
+}
+.class-item .class-check svg{
+  opacity:0;
+  transition:opacity .2s;
+}
+.class-item.active .class-check svg{opacity:1;}
+
+/* ============ 班級管理項 ============ */
+.class-row .sname{
+  font-size:15.5px;
+}
+.class-row .class-row-count{
+  font-size:12px;
+  font-weight:800;
+  color:#8CA6CE;
+  flex:0 0 auto;
+  white-space:nowrap;
+  padding-right:2px;
+}
 
 /* ============ 確認彈窗 ============ */
 .mask{
@@ -491,7 +642,7 @@ body{display:grid;place-items:center;}
   margin:0 0 6px;font-size:16.5px;font-weight:900;color:#1B3A75;letter-spacing:.02em;
 }
 .dialog-sub{
-  margin:0 0 20px;font-size:12.5px;font-weight:700;color:#8CA6CE;
+  margin:0 0 20px;font-size:12.5px;font-weight:700;color:#8CA6CE;line-height:1.45;
 }
 .dialog-actions{display:flex;gap:10px;}
 .dlg-btn{
@@ -573,9 +724,17 @@ body{display:grid;place-items:center;}
   </div>
 
   <main class="view" id="viewMain">
-    <div class="hud" id="hud">
-      <div class="hud-track"><div class="hud-fill" id="hudFill"></div></div>
-      <div class="hud-count" id="hudCount"><b>0</b><span>/0</span></div>
+    <div class="topbar">
+      <button class="class-btn" id="btnClass">
+        <span class="label" id="classNameLabel">我的班級</span>
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      <div class="hud" id="hud">
+        <div class="hud-track"><div class="hud-fill" id="hudFill"></div></div>
+        <div class="hud-count" id="hudCount"><b>0</b><span>/0</span></div>
+      </div>
     </div>
 
     <div class="grid-wrap">
@@ -609,9 +768,56 @@ body{display:grid;place-items:center;}
     </div>
   </main>
 
+  <!-- ========== 班級選擇浮層 ========== -->
+  <section class="sheet" id="classSheet">
+    <header class="sheet-head">
+      <div>
+        <h2>選擇班級</h2>
+      </div>
+    </header>
+    <div class="sheet-list" id="classList"></div>
+    <div class="sheet-foot">
+      <button class="big-btn" id="btnManageClasses">管理班級</button>
+    </div>
+  </section>
+
+  <!-- ========== 班級管理浮層 ========== -->
+  <section class="sheet" id="viewClassManage">
+    <header class="sheet-head">
+      <div>
+        <h2>管理班級</h2>
+      </div>
+    </header>
+    <div class="sheet-list" id="classManageList"></div>
+    <div class="sheet-foot">
+      <div class="backup-row">
+        <button class="bak-btn" id="btnAddClass">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          <span>新增班級</span>
+        </button>
+        <button class="bak-btn" id="btnImportClass">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>從檔案匯入</span>
+        </button>
+      </div>
+      <button class="big-btn" id="btnCloseClassManage">完 成</button>
+    </div>
+  </section>
+
+  <!-- ========== 設定頁（學生名單） ========== -->
   <section class="sheet" id="viewSettings">
     <header class="sheet-head">
-      <h2>學生名單</h2>
+      <div>
+        <h2>學生名單</h2>
+        <p class="sheet-sub" id="settingsClassName"></p>
+      </div>
       <button class="chip" id="btnAdd">＋ 新增</button>
     </header>
     <div class="sheet-list" id="studentList"></div>
@@ -623,7 +829,7 @@ body{display:grid;place-items:center;}
             <polyline points="17 8 12 3 7 8"/>
             <line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
-          <span>匯出備份</span>
+          <span>匯出本班</span>
         </button>
         <button class="bak-btn" id="btnImport">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
@@ -631,13 +837,14 @@ body{display:grid;place-items:center;}
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          <span>匯入備份</span>
+          <span>匯入到本班</span>
         </button>
       </div>
       <button class="big-btn" id="btnCloseSettings">完 成</button>
     </div>
   </section>
 
+  <!-- ========== 重置確認彈窗 ========== -->
   <div class="mask" id="mask">
     <div class="dialog">
       <p class="dialog-title">確定要重置嗎？</p>
@@ -645,6 +852,18 @@ body{display:grid;place-items:center;}
       <div class="dialog-actions">
         <button class="dlg-btn ghost" id="btnCancel">取消</button>
         <button class="dlg-btn danger" id="btnConfirm">重置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 通用確認彈窗 ========== -->
+  <div class="mask" id="confirmMask">
+    <div class="dialog">
+      <p class="dialog-title" id="confirmTitle">確認</p>
+      <p class="dialog-sub" id="confirmSub"></p>
+      <div class="dialog-actions">
+        <button class="dlg-btn ghost" id="confirmCancel">取消</button>
+        <button class="dlg-btn danger" id="confirmOk">確認</button>
       </div>
     </div>
   </div>
@@ -829,11 +1048,12 @@ const Sound = (function(){
 })();
 
 /* =========================================================
-   IndexedDB 儲存層
+   IndexedDB 儲存層（v2：班級制）
    ========================================================= */
 const DB_NAME = 'qian-dao-db';
-const DB_VER  = 1;
-const STORE   = 'students';
+const DB_VER  = 2;
+const STORE_CLASSES = 'classes';
+const STORE_META = 'meta';
 
 let db = null;
 let storageOK = false;
@@ -842,10 +1062,32 @@ function openDB(){
   return new Promise((resolve, reject) => {
     if(!window.indexedDB){ reject(new Error('no indexedDB')); return; }
     const req = indexedDB.open(DB_NAME, DB_VER);
-    req.onupgradeneeded = e => {
+    req.onupgradeneeded = (e) => {
       const d = e.target.result;
-      if(!d.objectStoreNames.contains(STORE)){
-        d.createObjectStore(STORE, { keyPath:'id' });
+      const tx = e.target.transaction;
+
+      if(!d.objectStoreNames.contains(STORE_CLASSES)){
+        d.createObjectStore(STORE_CLASSES, { keyPath: 'id' });
+      }
+      if(!d.objectStoreNames.contains(STORE_META)){
+        d.createObjectStore(STORE_META, { keyPath: 'key' });
+      }
+
+      /* 從舊版 v1 的 students store 遷移資料 */
+      if(e.oldVersion < 2 && d.objectStoreNames.contains('students')){
+        const oldStore = tx.objectStore('students');
+        const oldReq = oldStore.getAll();
+        oldReq.onsuccess = () => {
+          const oldStudents = oldReq.result || [];
+          const classId = 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+          const cls = {
+            id: classId,
+            name: '我的班級',
+            students: oldStudents.length ? oldStudents : []
+          };
+          tx.objectStore(STORE_CLASSES).put(cls);
+          tx.objectStore(STORE_META).put({ key: 'currentClassId', value: classId });
+        };
       }
     };
     req.onsuccess = e => resolve(e.target.result);
@@ -854,22 +1096,53 @@ function openDB(){
   });
 }
 
-function dbGetAll(){
+function dbGetAllClasses(){
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const st = tx.objectStore(STORE);
+    const tx = db.transaction(STORE_CLASSES, 'readonly');
+    const st = tx.objectStore(STORE_CLASSES);
     const req = st.getAll();
     req.onsuccess = () => resolve(req.result || []);
     req.onerror   = () => reject(req.error);
   });
 }
 
-function dbPutAll(list){
+function dbPutClass(cls){
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    const st = tx.objectStore(STORE);
-    st.clear();
-    list.forEach(s => st.put(s));
+    const tx = db.transaction(STORE_CLASSES, 'readwrite');
+    const st = tx.objectStore(STORE_CLASSES);
+    st.put(cls);
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error);
+    tx.onabort    = () => reject(tx.error);
+  });
+}
+
+function dbDeleteClass(id){
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_CLASSES, 'readwrite');
+    const st = tx.objectStore(STORE_CLASSES);
+    st.delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error);
+    tx.onabort    = () => reject(tx.error);
+  });
+}
+
+function dbGetMeta(key){
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_META, 'readonly');
+    const st = tx.objectStore(STORE_META);
+    const req = st.get(key);
+    req.onsuccess = () => resolve(req.result ? req.result.value : null);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+function dbPutMeta(key, value){
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_META, 'readwrite');
+    const st = tx.objectStore(STORE_META);
+    st.put({ key, value });
     tx.oncomplete = () => resolve();
     tx.onerror    = () => reject(tx.error);
     tx.onabort    = () => reject(tx.error);
@@ -891,12 +1164,17 @@ const DEFAULT_NAMES = [
 let uidCounter = 0;
 function uid(){ return 's' + (Date.now().toString(36)) + (uidCounter++).toString(36); }
 
+let classUidCounter = 0;
+function classUid(){ return 'c' + Date.now().toString(36) + (classUidCounter++).toString(36); }
+
 function defaultStudents(){
   return DEFAULT_NAMES.map((name,i)=>({
     id: uid(), num: i+1, name, time: null
   }));
 }
 
+let classes = [];
+let currentClassId = null;
 let students = [];
 let undoStack = [];
 
@@ -909,9 +1187,29 @@ function normalize(s){
   };
 }
 
+function normalizeClass(c){
+  return {
+    id: c.id || classUid(),
+    name: (c.name != null && String(c.name).trim() !== '') ? String(c.name) : '未命名班級',
+    students: Array.isArray(c.students) ? c.students.map(normalize) : []
+  };
+}
+
+function getCurrentClass(){
+  return classes.find(c => c.id === currentClassId) || null;
+}
+
 async function save(){
-  if(!db) return;
-  try{ await dbPutAll(students); }catch(e){ console.warn('save failed', e); }
+  const cls = getCurrentClass();
+  if(cls) cls.students = students;
+  if(!db || !cls) return;
+  try{ await dbPutClass(cls); }catch(e){ console.warn('save failed', e); }
+}
+
+function loadClassStudents(){
+  const cls = getCurrentClass();
+  students = cls ? (cls.students || []).map(s => ({...s})) : [];
+  undoStack = [];
 }
 
 /* =========================================================
@@ -926,14 +1224,22 @@ const hudFill     = document.getElementById('hudFill');
 const hudCount    = document.getElementById('hudCount');
 const viewSettings= document.getElementById('viewSettings');
 const studentList = document.getElementById('studentList');
+const classSheet  = document.getElementById('classSheet');
+const classList   = document.getElementById('classList');
+const viewClassManage = document.getElementById('viewClassManage');
+const classManageList = document.getElementById('classManageList');
 const mask        = document.getElementById('mask');
+const confirmMask = document.getElementById('confirmMask');
 const btnUndo     = document.getElementById('btnUndo');
 const fileInput   = document.getElementById('fileInput');
 const splash      = document.getElementById('splash');
 const updateBar   = document.getElementById('updateBar');
 const updateText  = document.getElementById('updateText');
+const classNameLabel = document.getElementById('classNameLabel');
+const settingsClassName = document.getElementById('settingsClassName');
 
 let CW = 0, CH = 0;
+let pendingImportMode = 'replace-current';
 
 /* =========================================================
    粒子系統
@@ -1063,8 +1369,16 @@ function toast(msg){
   el._t = setTimeout(()=>el.classList.remove('show'), 1900);
 }
 
+let confirmCallback = null;
+function showConfirm(title, sub, cb){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmSub').textContent = sub;
+  confirmCallback = cb;
+  confirmMask.classList.add('show');
+}
+
 /* =========================================================
-   渲染
+   渲染：主網格
    ========================================================= */
 function sortedStudents(){
   return [...students].sort((a, b) => {
@@ -1084,8 +1398,18 @@ function doneInnerHtml(s){
 function render(){
   const list = sortedStudents();
   grid.innerHTML = '';
-  const frag = document.createDocumentFragment();
 
+  if(!list.length){
+    const em = document.createElement('div');
+    em.className = 'empty-state';
+    em.innerHTML =
+      '<div class="em-title">還沒有學生</div>' +
+      '<div class="em-sub">點擊下方「設定」按鈕<br>新增學生到此班級</div>';
+    grid.appendChild(em);
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
   list.forEach((s, i) => {
     const card = document.createElement('div');
     card.className = 'card';
@@ -1108,7 +1432,7 @@ function render(){
 }
 
 /* =========================================================
-   卡片事件（pointer 版本）
+   卡片事件
    ========================================================= */
 function attachCardEvents(card, s){
   let active = false;
@@ -1268,9 +1592,21 @@ function updateHud(){
 }
 
 /* =========================================================
-   設定頁
+   班級標籤更新
+   ========================================================= */
+function updateClassLabel(){
+  const cls = getCurrentClass();
+  classNameLabel.textContent = cls ? cls.name : '未選擇';
+  if(settingsClassName){
+    settingsClassName.textContent = cls ? cls.name : '';
+  }
+}
+
+/* =========================================================
+   設定頁（學生名單）
    ========================================================= */
 function renderSettings(){
+  updateClassLabel();
   studentList.innerHTML = '';
   const frag = document.createDocumentFragment();
 
@@ -1327,21 +1663,209 @@ function renderSettings(){
 }
 
 /* =========================================================
-   匯出 / 匯入
+   班級選擇列表
    ========================================================= */
-function exportBackup(){
+function renderClassList(){
+  classList.innerHTML = '';
+  const frag = document.createDocumentFragment();
+
+  classes.forEach((c, i) => {
+    const item = document.createElement('div');
+    item.className = 'class-item' + (c.id === currentClassId ? ' active' : '');
+    item.style.animationDelay = Math.min(i, 16) * 18 + 'ms';
+
+    const doneCount = (c.students || []).filter(s => s.time).length;
+    const totalCount = (c.students || []).length;
+
+    item.innerHTML =
+      '<div class="class-name">' + escapeHtml(c.name) + '</div>' +
+      '<div class="class-count">' + doneCount + '/' + totalCount + '</div>' +
+      '<div class="class-check">' +
+        '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">' +
+          '<polyline points="4 12.5 10 18.5 20 6.5"></polyline>' +
+        '</svg>' +
+      '</div>';
+
+    item.addEventListener('click', () => {
+      Sound.press();
+      switchClass(c.id);
+    });
+
+    frag.appendChild(item);
+  });
+
+  classList.appendChild(frag);
+}
+
+/* =========================================================
+   班級管理列表（每行可匯出）
+   ========================================================= */
+function renderClassManageList(){
+  classManageList.innerHTML = '';
+  const frag = document.createDocumentFragment();
+
+  const exportSvg =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
+      '<polyline points="17 8 12 3 7 8"/>' +
+      '<line x1="12" y1="3" x2="12" y2="15"/>' +
+    '</svg>';
+
+  classes.forEach((c, i) => {
+    const row = document.createElement('div');
+    row.className = 'srow class-row';
+    row.style.animationDelay = Math.min(i, 16) * 18 + 'ms';
+
+    const nameInput = document.createElement('input');
+    nameInput.className = 'sname';
+    nameInput.type = 'text';
+    nameInput.placeholder = '班級名稱';
+    nameInput.value = c.name;
+    nameInput.autocomplete = 'off';
+    nameInput.autocorrect = 'off';
+    nameInput.spellcheck = false;
+
+    const countEl = document.createElement('span');
+    countEl.className = 'class-row-count';
+    countEl.textContent = (c.students || []).length + ' 位';
+
+    const exp = document.createElement('button');
+    exp.className = 'sexport';
+    exp.setAttribute('aria-label', '匯出');
+    exp.innerHTML = exportSvg;
+
+    const del = document.createElement('button');
+    del.className = 'sdel';
+    del.textContent = '✕';
+    del.setAttribute('aria-label', '刪除班級');
+    if(classes.length <= 1){
+      del.style.opacity = '.4';
+      del.style.cursor = 'default';
+    }
+
+    nameInput.addEventListener('input', () => {
+      c.name = nameInput.value;
+      if(db) dbPutClass(c).catch(()=>{});
+      if(c.id === currentClassId) updateClassLabel();
+    });
+
+    exp.addEventListener('click', () => {
+      Sound.press();
+      vibrate(8);
+      exportClassFile(c);
+    });
+
+    del.addEventListener('click', () => {
+      if(classes.length <= 1){
+        Sound.nope();
+        toast('至少要保留一個班級');
+        return;
+      }
+      Sound.press();
+      showConfirm(
+        '刪除班級',
+        '「' + c.name + '」及所有簽到紀錄將被永久刪除。',
+        () => deleteClass(c.id)
+      );
+    });
+
+    row.appendChild(nameInput);
+    row.appendChild(countEl);
+    row.appendChild(exp);
+    row.appendChild(del);
+    frag.appendChild(row);
+  });
+
+  classManageList.appendChild(frag);
+}
+
+/* =========================================================
+   班級操作
+   ========================================================= */
+async function switchClass(id){
+  if(id === currentClassId){
+    closeSheet(classSheet);
+    return;
+  }
+  await save();
+
+  currentClassId = id;
+  if(db){ try{ await dbPutMeta('currentClassId', id); }catch(_){} }
+
+  loadClassStudents();
+  updateClassLabel();
+  render();
+  updateHud();
+  updateUndoBtn();
+
+  closeSheet(classSheet);
+}
+
+async function addClass(){
+  const newCls = {
+    id: classUid(),
+    name: '班級 ' + (classes.length + 1),
+    students: defaultStudents()
+  };
+  classes.push(newCls);
+  if(db){ try{ await dbPutClass(newCls); }catch(_){} }
+
+  renderClassManageList();
+  Sound.signIn();
+  vibrate(8);
+}
+
+async function deleteClass(id){
+  classes = classes.filter(c => c.id !== id);
+  if(db){ try{ await dbDeleteClass(id); }catch(_){} }
+
+  if(currentClassId === id){
+    currentClassId = classes[0].id;
+    if(db){ try{ await dbPutMeta('currentClassId', currentClassId); }catch(_){} }
+    loadClassStudents();
+    updateClassLabel();
+    render();
+    updateHud();
+    updateUndoBtn();
+  }
+  renderClassManageList();
+  Sound.undo();
+  vibrate(14);
+  toast('已刪除班級');
+}
+
+/* =========================================================
+   Sheet 開關
+   ========================================================= */
+function openSheet(sheet){ sheet.classList.add('open'); }
+function closeSheet(sheet){ sheet.classList.remove('open'); }
+
+/* =========================================================
+   匯出：單一班級
+   ========================================================= */
+function exportClassFile(cls){
+  if(!cls) return;
+
+  /* 若為當前班級，先同步 students 以確保最新 */
+  if(cls.id === currentClassId) cls.students = students;
+
   const data = JSON.stringify({
     app: 'qian-dao',
-    version: 1,
+    version: 3,
+    type: 'class',
     exportedAt: new Date().toISOString(),
-    students: students
+    class: {
+      name: cls.name,
+      students: cls.students
+    }
   }, null, 2);
 
   const blob = new Blob([data], { type:'application/json' });
   const url  = URL.createObjectURL(blob);
 
   const d = new Date();
-  const fname = '簽到名單_' +
+  const safe = String(cls.name || '班級').replace(/[\\/:*?"<>|]/g, '_').trim() || '班級';
+  const fname = safe + '_' +
     d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '_' +
     pad(d.getHours()) + pad(d.getMinutes()) + '.json';
 
@@ -1355,32 +1879,91 @@ function exportBackup(){
 
   Sound.signIn();
   vibrate(12);
-  toast('已匯出備份檔案');
+  toast('已匯出「' + cls.name + '」');
 }
 
-function importBackup(file){
+/* =========================================================
+   匯入：從 JSON 中提取班級列表
+   ========================================================= */
+function extractClasses(parsed){
+  if(!parsed) return [];
+
+  /* 新格式：{ class: { name, students } } */
+  if(parsed.class && Array.isArray(parsed.class.students)){
+    return [{
+      name: parsed.class.name || '匯入班級',
+      students: parsed.class.students
+    }];
+  }
+
+  /* 舊完整格式：{ classes: [...] } */
+  if(Array.isArray(parsed.classes)){
+    return parsed.classes
+      .filter(c => c && Array.isArray(c.students))
+      .map(c => ({
+        name: c.name || '匯入班級',
+        students: c.students
+      }));
+  }
+
+  /* 舊格式：{ students: [...] } */
+  if(Array.isArray(parsed.students)){
+    return [{
+      name: parsed.name || '匯入班級',
+      students: parsed.students
+    }];
+  }
+
+  /* 直接是陣列 */
+  if(Array.isArray(parsed)){
+    return [{ name: '匯入班級', students: parsed }];
+  }
+
+  return [];
+}
+
+/* =========================================================
+   匯入處理
+   ========================================================= */
+function handleImportFile(file, mode){
   const reader = new FileReader();
-  reader.onload = async () => {
+  reader.onload = () => {
+    let parsed;
     try{
-      let parsed = JSON.parse(reader.result);
-      let arr = Array.isArray(parsed) ? parsed : (parsed && parsed.students);
-      if(!Array.isArray(arr) || arr.length === 0) throw new Error('bad format');
-
-      students = arr.map(normalize);
-      undoStack = [];
-      await save();
-
-      renderSettings();
-      render();
-      updateHud();
-      updateUndoBtn();
-
-      Sound.signIn();
-      vibrate([12, 40, 12]);
-      toast('已匯入 ' + students.length + ' 位學生');
-    }catch(err){
+      parsed = JSON.parse(reader.result);
+    }catch(e){
       Sound.nope();
       toast('檔案格式不正確');
+      return;
+    }
+
+    const parsedClasses = extractClasses(parsed);
+    if(!parsedClasses.length){
+      Sound.nope();
+      toast('檔案中沒有學生資料');
+      return;
+    }
+
+    if(mode === 'replace-current'){
+      const src = parsedClasses[0];
+      const cls = getCurrentClass();
+      const clsName = cls ? cls.name : '當前班級';
+      const newStudents = src.students.map(normalize);
+
+      if(!newStudents.length){
+        Sound.nope();
+        toast('檔案中沒有學生');
+        return;
+      }
+
+      showConfirm(
+        '匯入到本班',
+        '「' + clsName + '」目前的 ' + students.length + ' 位學生將被替換為 ' + newStudents.length + ' 位，確定嗎？',
+        () => doReplaceStudents(newStudents)
+      );
+    }else{
+      /* new-class：一次匯入所有解析出的班級 */
+      doAddClasses(parsedClasses);
     }
   };
   reader.onerror = () => {
@@ -1388,6 +1971,47 @@ function importBackup(file){
     toast('讀取檔案失敗');
   };
   reader.readAsText(file);
+}
+
+async function doReplaceStudents(newStudents){
+  students = newStudents;
+  undoStack = [];
+  const cls = getCurrentClass();
+  if(cls){
+    cls.students = students;
+    if(db){ try{ await dbPutClass(cls); }catch(_){} }
+  }
+  renderSettings();
+  render();
+  updateHud();
+  updateUndoBtn();
+  Sound.signIn();
+  vibrate([12, 40, 12]);
+  toast('已匯入 ' + students.length + ' 位學生');
+}
+
+async function doAddClasses(parsedClasses){
+  let added = 0;
+  for(const pc of parsedClasses){
+    const newCls = {
+      id: classUid(),
+      name: (pc.name && String(pc.name).trim()) || ('匯入班級 ' + (classes.length + 1)),
+      students: pc.students.map(normalize)
+    };
+    if(!newCls.students.length) continue;
+    classes.push(newCls);
+    if(db){ try{ await dbPutClass(newCls); }catch(_){} }
+    added++;
+  }
+  renderClassManageList();
+  if(added === 0){
+    Sound.nope();
+    toast('檔案中沒有有效班級');
+    return;
+  }
+  Sound.signIn();
+  vibrate([12, 40, 12]);
+  toast('已匯入 ' + added + ' 個班級');
 }
 
 /* =========================================================
@@ -1403,8 +2027,10 @@ function bindUI(){
   document.addEventListener('touchstart', unlock, { once:true, passive:true });
   document.addEventListener('mousedown', unlock, { once:true });
 
+  /* --- 撤銷 --- */
   btnUndo.addEventListener('click', undoLast);
 
+  /* --- 重置 --- */
   document.getElementById('btnReset').addEventListener('click', () => {
     Sound.press();
     vibrate(10);
@@ -1437,18 +2063,19 @@ function bindUI(){
     toast('已重置全部紀錄');
   });
 
+  /* --- 設定頁 --- */
   document.getElementById('btnSettings').addEventListener('click', () => {
     Sound.press();
     vibrate(8);
     renderSettings();
-    viewSettings.classList.add('open');
+    openSheet(viewSettings);
   });
 
   document.getElementById('btnCloseSettings').addEventListener('click', () => {
     Sound.press();
     students = students.filter(s => String(s.name).trim() !== '' || String(s.num).trim() !== '');
     save();
-    viewSettings.classList.remove('open');
+    closeSheet(viewSettings);
     render();
     updateHud();
     updateUndoBtn();
@@ -1472,18 +2099,85 @@ function bindUI(){
     vibrate(8);
   });
 
-  document.getElementById('btnExport').addEventListener('click', exportBackup);
+  /* --- 設定頁：匯出本班 / 匯入到本班 --- */
+  document.getElementById('btnExport').addEventListener('click', () => {
+    const cls = getCurrentClass();
+    if(!cls){ Sound.nope(); return; }
+    Sound.press();
+    exportClassFile(cls);
+  });
 
   document.getElementById('btnImport').addEventListener('click', () => {
     Sound.press();
+    pendingImportMode = 'replace-current';
     fileInput.click();
   });
-  fileInput.addEventListener('change', (e) => {
-    const f = e.target.files && e.target.files[0];
-    if(f) importBackup(f);
-    e.target.value = '';
+
+  /* --- 班級選擇 --- */
+  document.getElementById('btnClass').addEventListener('click', () => {
+    Sound.press();
+    vibrate(8);
+    renderClassList();
+    openSheet(classSheet);
   });
 
+  /* --- 進入班級管理 --- */
+  document.getElementById('btnManageClasses').addEventListener('click', () => {
+    Sound.press();
+    closeSheet(classSheet);
+    setTimeout(() => {
+      renderClassManageList();
+      openSheet(viewClassManage);
+    }, 320);
+  });
+
+  document.getElementById('btnCloseClassManage').addEventListener('click', () => {
+    Sound.press();
+    closeSheet(viewClassManage);
+    updateClassLabel();
+  });
+
+  document.getElementById('btnAddClass').addEventListener('click', () => {
+    Sound.press();
+    addClass();
+  });
+
+  document.getElementById('btnImportClass').addEventListener('click', () => {
+    Sound.press();
+    pendingImportMode = 'new-class';
+    fileInput.click();
+  });
+
+  /* --- 檔案選擇器 --- */
+  fileInput.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if(!f) return;
+    handleImportFile(f, pendingImportMode || 'replace-current');
+  });
+
+  /* --- 通用確認彈窗 --- */
+  document.getElementById('confirmCancel').addEventListener('click', () => {
+    Sound.press();
+    confirmMask.classList.remove('show');
+    confirmCallback = null;
+  });
+
+  document.getElementById('confirmOk').addEventListener('click', () => {
+    confirmMask.classList.remove('show');
+    const cb = confirmCallback;
+    confirmCallback = null;
+    if(cb) cb();
+  });
+
+  confirmMask.addEventListener('click', (e) => {
+    if(e.target === confirmMask){
+      confirmMask.classList.remove('show');
+      confirmCallback = null;
+    }
+  });
+
+  /* --- 視窗尺寸 --- */
   if(window.ResizeObserver){
     new ResizeObserver(resizeCanvas).observe(canvas);
   }
@@ -1517,23 +2211,19 @@ function registerSW(){
       .then(reg => {
         console.log('✓ SW 已註冊');
 
-        /* 每次啟動主動檢查有沒有新版 */
         reg.update().catch(()=>{});
 
-        /* 若已有 waiting 的 SW，立即讓它接管 */
         if(reg.waiting && navigator.serviceWorker.controller){
           showUpdateBar('發現新版本，正在套用…');
           reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
 
-        /* 監聽是否有新版本在安裝 */
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
           if(!nw) return;
 
           nw.addEventListener('statechange', () => {
             if(nw.state === 'installed' && navigator.serviceWorker.controller){
-              /* 新版本已下載完成，通知它跳過等待 → 觸發 controllerchange */
               showUpdateBar('發現新版本，正在套用…');
               try{ nw.postMessage({ type: 'SKIP_WAITING' }); }catch(_){}
             }
@@ -1542,7 +2232,6 @@ function registerSW(){
       })
       .catch(err => console.log('SW 註冊失敗：', err.message));
 
-    /* 新 SW 接管時刷新一次頁面，只刷一次避免循環 */
     let refreshed = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if(refreshed) return;
@@ -1564,22 +2253,50 @@ function registerSW(){
 
   try{
     db = await openDB();
-    const list = await dbGetAll();
-    if(list && list.length){
-      students = list.map(normalize);
+    classes = await dbGetAllClasses();
+
+    if(!classes.length){
+      const cls = {
+        id: classUid(),
+        name: '我的班級',
+        students: defaultStudents()
+      };
+      await dbPutClass(cls);
+      classes = [cls];
+      await dbPutMeta('currentClassId', cls.id);
+      currentClassId = cls.id;
     }else{
-      students = defaultStudents();
-      await dbPutAll(students);
+      let cid = await dbGetMeta('currentClassId');
+      if(!cid || !classes.find(c => c.id === cid)){
+        cid = classes[0].id;
+        await dbPutMeta('currentClassId', cid);
+      }
+      currentClassId = cid;
+      classes = classes.map(c => ({
+        id: c.id || classUid(),
+        name: c.name || '未命名班級',
+        students: Array.isArray(c.students) ? c.students : []
+      }));
     }
+
+    loadClassStudents();
     storageOK = true;
   }catch(e){
     console.warn('IndexedDB unavailable, fallback to memory', e);
-    students = defaultStudents();
+    const cls = {
+      id: classUid(),
+      name: '我的班級',
+      students: defaultStudents()
+    };
+    classes = [cls];
+    currentClassId = cls.id;
+    loadClassStudents();
     storageOK = false;
   }
 
   resizeCanvas();
   bindUI();
+  updateClassLabel();
   render();
   updateHud();
   updateUndoBtn();
