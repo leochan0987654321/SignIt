@@ -1,5 +1,5 @@
 /* sw.js —— Service Worker，離線快取 + 支援自動更新 */
-const CACHE = 'qian-dao-v8';   /* ← 每次更新代碼都要把版本號 +1 */
+const CACHE = 'qian-dao-v9';   /* ← 每次更新代碼都要把版本號 +1 */
 const ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', (e) => {
