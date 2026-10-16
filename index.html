@@ -23,16 +23,15 @@
   -webkit-touch-callout:none;
 }
 html,body{
-  margin:0;padding:0;height:100%;overflow:hidden;
+  margin:0;padding:0;
+  height:100%;
+  overflow:hidden;
   background:#08182E;
   font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","PingFang SC","Hiragino Sans","Microsoft JhengHei",system-ui,sans-serif;
   overscroll-behavior:none;
   -webkit-overflow-scrolling:touch;
-  position:fixed;
-  width:100%;
   -webkit-user-select:none;user-select:none;
 }
-body{display:grid;place-items:center;}
 
 /* ============ 啟動畫面 ============ */
 #splash{
@@ -83,9 +82,11 @@ body{display:grid;place-items:center;}
   40%{transform:scale(1.45);opacity:1;}
 }
 
-/* ============ 手機外框 ============ */
+/* ============ 手機外框（改為 fixed 對齊 viewport） ============ */
 #phone{
-  position:relative;
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
   width:min(100vw,56.25vh);
   height:min(177.78vw,100vh);
   background:radial-gradient(120% 80% at 50% 0%,#FFFFFF 0%,#F2F8FF 55%,#E4EEFF 100%);
@@ -94,20 +95,26 @@ body{display:grid;place-items:center;}
   box-shadow:0 30px 90px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);
   isolation:isolate;
 }
+@supports (height:100dvh){
+  #phone{height:min(177.78vw,100dvh);}
+}
+
+/* 獨立模式：從 (0,0) 佔滿整個 viewport */
 @media (display-mode: standalone){
+  html,body{background:#F2F8FF;}
   #phone{
-    width:100vw;height:100vh;
+    top:0;left:0;
+    transform:none;
+    width:100vw;
+    height:100vh;
     border-radius:0;
     box-shadow:none;
   }
-  html,body{background:#F2F8FF;}
-}
-@supports (height:100dvh){
-  #phone{width:min(100vw,56.25dvh);height:min(177.78vw,100dvh);}
-  @media (display-mode: standalone){
-    #phone{width:100vw;height:100dvh;}
+  @supports (height:100dvh){
+    #phone{height:100dvh;}
   }
 }
+
 #phone::before{
   content:'';position:absolute;inset:0;
   background-image:radial-gradient(circle,rgba(59,130,246,.13) 1.2px,transparent 1.3px);
@@ -421,14 +428,16 @@ body{display:grid;place-items:center;}
 }
 
 /* ============ Sheet（浮層頁）通用 ============ */
+/* 底部 padding 用 max() 保底，即使 env() 回 0 也留足空間 */
 .sheet{
   position:absolute;inset:0;z-index:100;
   background:linear-gradient(180deg,#FFFFFF 0%,#F1F7FF 100%);
   display:flex;flex-direction:column;
+  overflow:hidden;
   padding:
     calc(16px + env(safe-area-inset-top))
     calc(14px + env(safe-area-inset-right))
-    calc(16px + env(safe-area-inset-bottom))
+    max(24px, calc(16px + env(safe-area-inset-bottom)))
     calc(14px + env(safe-area-inset-left));
   transform:translateY(101%);
   transition:transform .46s cubic-bezier(.32,.72,0,1);
@@ -559,6 +568,7 @@ body{display:grid;place-items:center;}
   background:linear-gradient(160deg,#7FB4FF,#2F6FE4);
   box-shadow:0 4px 0 #2258C0,0 10px 22px rgba(47,111,228,.30);
   transition:transform .17s cubic-bezier(.34,1.56,.64,1),box-shadow .17s;
+  flex:0 0 auto;
 }
 .big-btn:active{transform:translateY(3px) scale(.99);box-shadow:0 1px 0 #2258C0;}
 
@@ -631,14 +641,9 @@ body{display:grid;place-items:center;}
   padding-right:2px;
 }
 
-/* ============ 班級 Sheet 內部模式切換（修正版） ============ */
-/* 管理模式元素預設隱藏 */
+/* ============ 班級 Sheet 內部模式切換 ============ */
 #classSheet .mode-manage{display:none !important;}
-
-/* 切到管理模式：隱藏選擇模式元素 */
 #classSheet.manage .mode-select{display:none !important;}
-
-/* 管理模式元素以正確的 display 型別顯示 */
 #classSheet.manage .sheet-head.mode-manage{display:flex !important;}
 #classSheet.manage .sheet-list.mode-manage{display:block !important;}
 #classSheet.manage .sheet-foot.mode-manage{display:flex !important;}
@@ -745,7 +750,6 @@ body{display:grid;place-items:center;}
 <div id="phone">
   <canvas id="fx"></canvas>
 
-  <!-- 更新提示條 -->
   <div id="updateBar">
     <span class="spin"></span>
     <span id="updateText">正在更新…</span>
@@ -796,16 +800,14 @@ body{display:grid;place-items:center;}
     </div>
   </main>
 
-  <!-- ========== 班級浮層（選擇 + 管理，同一個 sheet） ========== -->
+  <!-- ========== 班級浮層 ========== -->
   <section class="sheet" id="classSheet">
-    <!-- 選擇模式：標題列 -->
     <header class="sheet-head mode-select">
       <div>
         <h2>選擇班級</h2>
       </div>
     </header>
 
-    <!-- 管理模式：標題列（含返回） -->
     <header class="sheet-head mode-manage">
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
         <button class="back-btn" id="btnBackFromManage" aria-label="返回">
@@ -817,18 +819,13 @@ body{display:grid;place-items:center;}
       </div>
     </header>
 
-    <!-- 選擇模式：列表 -->
     <div class="sheet-list mode-select" id="classList"></div>
-
-    <!-- 管理模式：列表 -->
     <div class="sheet-list mode-manage" id="classManageList"></div>
 
-    <!-- 選擇模式：底部 -->
     <div class="sheet-foot mode-select">
       <button class="big-btn" id="btnManageClasses">管理班級</button>
     </div>
 
-    <!-- 管理模式：底部 -->
     <div class="sheet-foot mode-manage">
       <div class="backup-row">
         <button class="bak-btn" id="btnAddClass">
@@ -851,7 +848,7 @@ body{display:grid;place-items:center;}
     </div>
   </section>
 
-  <!-- ========== 設定頁（學生名單） ========== -->
+  <!-- ========== 設定頁 ========== -->
   <section class="sheet" id="viewSettings">
     <header class="sheet-head">
       <div>
@@ -884,7 +881,6 @@ body{display:grid;place-items:center;}
     </div>
   </section>
 
-  <!-- ========== 重置確認彈窗 ========== -->
   <div class="mask" id="mask">
     <div class="dialog">
       <p class="dialog-title">確定要重置嗎？</p>
@@ -896,7 +892,6 @@ body{display:grid;place-items:center;}
     </div>
   </div>
 
-  <!-- ========== 通用確認彈窗 ========== -->
   <div class="mask" id="confirmMask">
     <div class="dialog">
       <p class="dialog-title" id="confirmTitle">確認</p>
@@ -1088,7 +1083,7 @@ const Sound = (function(){
 })();
 
 /* =========================================================
-   IndexedDB 儲存層（v2：班級制）
+   IndexedDB 儲存層
    ========================================================= */
 const DB_NAME = 'qian-dao-db';
 const DB_VER  = 2;
@@ -1223,14 +1218,6 @@ function normalize(s){
     num: s.num ?? '',
     name: s.name ?? '',
     time: s.time ?? null
-  };
-}
-
-function normalizeClass(c){
-  return {
-    id: c.id || classUid(),
-    name: (c.name != null && String(c.name).trim() !== '') ? String(c.name) : '未命名班級',
-    students: Array.isArray(c.students) ? c.students.map(normalize) : []
   };
 }
 
@@ -1416,7 +1403,7 @@ function showConfirm(title, sub, cb){
 }
 
 /* =========================================================
-   渲染：主網格
+   渲染
    ========================================================= */
 function sortedStudents(){
   return [...students].sort((a, b) => {
@@ -1629,9 +1616,6 @@ function updateHud(){
   hud.classList.toggle('complete', total > 0 && done === total);
 }
 
-/* =========================================================
-   班級標籤更新
-   ========================================================= */
 function updateClassLabel(){
   const cls = getCurrentClass();
   classNameLabel.textContent = cls ? cls.name : '未選擇';
@@ -1641,7 +1625,7 @@ function updateClassLabel(){
 }
 
 /* =========================================================
-   設定頁（學生名單）
+   設定頁
    ========================================================= */
 function renderSettings(){
   updateClassLabel();
@@ -1701,7 +1685,7 @@ function renderSettings(){
 }
 
 /* =========================================================
-   班級選擇列表
+   班級列表
    ========================================================= */
 function renderClassList(){
   classList.innerHTML = '';
@@ -1735,9 +1719,6 @@ function renderClassList(){
   classList.appendChild(frag);
 }
 
-/* =========================================================
-   班級管理列表（每行可匯出）
-   ========================================================= */
 function renderClassManageList(){
   classManageList.innerHTML = '';
   const frag = document.createDocumentFragment();
@@ -1873,7 +1854,7 @@ async function deleteClass(id){
 }
 
 /* =========================================================
-   Sheet 開關 + 班級 Sheet 內模式切換
+   Sheet 開關 + 模式切換
    ========================================================= */
 function openSheet(sheet){ sheet.classList.add('open'); }
 function closeSheet(sheet){
@@ -1935,7 +1916,7 @@ function exportClassFile(cls){
 }
 
 /* =========================================================
-   匯入：解析
+   匯入：解析 + 處理
    ========================================================= */
 function extractClasses(parsed){
   if(!parsed) return [];
@@ -1970,9 +1951,6 @@ function extractClasses(parsed){
   return [];
 }
 
-/* =========================================================
-   匯入處理
-   ========================================================= */
 function handleImportFile(file, mode){
   const reader = new FileReader();
   reader.onload = () => {
@@ -2074,10 +2052,8 @@ function bindUI(){
   document.addEventListener('touchstart', unlock, { once:true, passive:true });
   document.addEventListener('mousedown', unlock, { once:true });
 
-  /* --- 撤銷 --- */
   btnUndo.addEventListener('click', undoLast);
 
-  /* --- 重置 --- */
   document.getElementById('btnReset').addEventListener('click', () => {
     Sound.press();
     vibrate(10);
@@ -2110,7 +2086,6 @@ function bindUI(){
     toast('已重置全部紀錄');
   });
 
-  /* --- 設定頁 --- */
   document.getElementById('btnSettings').addEventListener('click', () => {
     Sound.press();
     vibrate(8);
@@ -2146,7 +2121,6 @@ function bindUI(){
     vibrate(8);
   });
 
-  /* --- 設定頁：匯出本班 / 匯入到本班 --- */
   document.getElementById('btnExport').addEventListener('click', () => {
     const cls = getCurrentClass();
     if(!cls){ Sound.nope(); return; }
@@ -2160,7 +2134,6 @@ function bindUI(){
     fileInput.click();
   });
 
-  /* --- 班級選擇 --- */
   document.getElementById('btnClass').addEventListener('click', () => {
     Sound.press();
     vibrate(8);
@@ -2168,20 +2141,17 @@ function bindUI(){
     openSheet(classSheet);
   });
 
-  /* --- 切換到管理模式（同一個 sheet 內） --- */
   document.getElementById('btnManageClasses').addEventListener('click', () => {
     Sound.press();
     vibrate(8);
     showManageMode();
   });
 
-  /* --- 從管理模式返回選擇模式 --- */
   document.getElementById('btnBackFromManage').addEventListener('click', () => {
     Sound.press();
     showSelectMode();
   });
 
-  /* --- 管理模式的「完成」：直接關閉 sheet --- */
   document.getElementById('btnCloseClassManage').addEventListener('click', () => {
     Sound.press();
     closeSheet(classSheet);
@@ -2199,7 +2169,6 @@ function bindUI(){
     fileInput.click();
   });
 
-  /* --- 檔案選擇器 --- */
   fileInput.addEventListener('change', (e) => {
     const f = e.target.files && e.target.files[0];
     e.target.value = '';
@@ -2207,7 +2176,6 @@ function bindUI(){
     handleImportFile(f, pendingImportMode || 'replace-current');
   });
 
-  /* --- 通用確認彈窗 --- */
   document.getElementById('confirmCancel').addEventListener('click', () => {
     Sound.press();
     confirmMask.classList.remove('show');
@@ -2228,7 +2196,6 @@ function bindUI(){
     }
   });
 
-  /* --- 視窗尺寸 --- */
   if(window.ResizeObserver){
     new ResizeObserver(resizeCanvas).observe(canvas);
   }
