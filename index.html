@@ -1648,7 +1648,7 @@ function renderSettings(){
   studentList.innerHTML = '';
   const frag = document.createDocumentFragment();
 
-  students.forEach((s, i) => {
+  sortedStudents().forEach((s, i) => {
     const row = document.createElement('div');
     row.className = 'srow';
     row.style.animationDelay = Math.min(i, 16) * 18 + 'ms';
@@ -2129,22 +2129,37 @@ function bindUI(){
   });
 
   document.getElementById('btnAdd').addEventListener('click', () => {
-    const maxNum = students.reduce((m, s) => {
-      const n = Number(s.num);
-      return isNaN(n) ? m : Math.max(m, n);
-    }, 0);
-    students.push({ id: uid(), num: maxNum + 1, name: '', time: null });
-    save();
-    renderSettings();
-    Sound.press();
+  const maxNum = students.reduce((m, s) => {
+    const n = Number(s.num);
+    return isNaN(n) ? m : Math.max(m, n);
+  }, 0);
+  students.push({ id: uid(), num: maxNum + 1, name: '', time: null });
+  save();
+  renderSettings();
+  Sound.press();
 
-    const last = studentList.lastElementChild;
-    if(last){
-      last.scrollIntoView({ behavior:'smooth', block:'center' });
-      setTimeout(() => last.querySelector('.sname').focus(), 320);
+  /* 只滾動 sheet-list 內部，不影響頁面其他部分 */
+  requestAnimationFrame(() => {
+    try{
+      studentList.scrollTo({ top: studentList.scrollHeight, behavior: 'smooth' });
+    }catch(_){
+      studentList.scrollTop = studentList.scrollHeight;
     }
-    vibrate(8);
   });
+
+  /* focus 時 preventScroll，避免 iOS 自動捲動整個頁面 */
+  const last = studentList.lastElementChild;
+  if(last){
+    setTimeout(() => {
+      const inp = last.querySelector('.sname');
+      if(inp){
+        try{ inp.focus({ preventScroll: true }); }
+        catch(_){ inp.focus(); }
+      }
+    }, 360);
+  }
+  vibrate(8);
+});
 
   /* --- 設定頁：匯出本班 / 匯入到本班 --- */
   document.getElementById('btnExport').addEventListener('click', () => {
