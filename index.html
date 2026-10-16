@@ -120,6 +120,20 @@ body{display:grid;place-items:center;}
   pointer-events:none;z-index:50;
 }
 
+/* ============ 動畫層（不裁切） ============ */
+#animLayer{
+  position:absolute;inset:0;
+  z-index:45;
+  pointer-events:none;
+  overflow:visible;
+}
+#animLayer .card{
+  position:absolute !important;
+  margin:0 !important;
+  animation-delay:0s !important;
+  will-change:transform,opacity;
+}
+
 .view{
   position:absolute;inset:0;z-index:1;
   display:flex;flex-direction:column;
@@ -316,10 +330,10 @@ body{display:grid;place-items:center;}
   animation:popOut .5s cubic-bezier(.3,.9,.4,1) forwards;
 }
 @keyframes popOut{
-  0%  {transform:scale(.86) rotate(0deg);  opacity:1; filter:brightness(1);}
-  28% {transform:scale(1.55) rotate(-10deg);opacity:1; filter:brightness(1.45) saturate(1.3);}
-  48% {transform:scale(1.26) rotate(8deg); opacity:1; filter:brightness(1.2);}
-  100%{transform:scale(.05) rotate(38deg); opacity:0; filter:brightness(2) saturate(.4);}
+  0%  {transform:scale(.86) rotate(0deg);   opacity:1; filter:brightness(1);}
+  28% {transform:scale(1.30) rotate(-9deg); opacity:1; filter:brightness(1.45) saturate(1.3);}
+  48% {transform:scale(1.10) rotate(7deg);  opacity:1; filter:brightness(1.2);}
+  100%{transform:scale(.05) rotate(38deg);  opacity:0; filter:brightness(2) saturate(.4);}
 }
 
 .card.restoring{
@@ -455,7 +469,6 @@ body{display:grid;place-items:center;}
   white-space:nowrap;
 }
 
-/* 返回按鈕 */
 .back-btn{
   border:none;
   width:36px;height:36px;
@@ -516,7 +529,6 @@ body{display:grid;place-items:center;}
 .srow .snum:focus{background:#DBE8FF;box-shadow:0 0 0 2px rgba(59,130,246,.30);}
 .srow .sname:focus{background:#F2F7FF;border-radius:10px;}
 
-/* 小圓按鈕（刪除 / 匯出） */
 .srow .sdel,
 .srow .sexport{
   width:32px;height:32px;flex:0 0 auto;
@@ -631,14 +643,9 @@ body{display:grid;place-items:center;}
   padding-right:2px;
 }
 
-/* ============ 班級 Sheet 內部模式切換（修正版） ============ */
-/* 管理模式元素預設隱藏 */
+/* ============ 班級 Sheet 內部模式切換 ============ */
 #classSheet .mode-manage{display:none !important;}
-
-/* 切到管理模式：隱藏選擇模式元素 */
 #classSheet.manage .mode-select{display:none !important;}
-
-/* 管理模式元素以正確的 display 型別顯示 */
 #classSheet.manage .sheet-head.mode-manage{display:flex !important;}
 #classSheet.manage .sheet-list.mode-manage{display:block !important;}
 #classSheet.manage .sheet-foot.mode-manage{display:flex !important;}
@@ -745,6 +752,9 @@ body{display:grid;place-items:center;}
 <div id="phone">
   <canvas id="fx"></canvas>
 
+  <!-- 動畫層（不裁切） -->
+  <div id="animLayer"></div>
+
   <!-- 更新提示條 -->
   <div id="updateBar">
     <span class="spin"></span>
@@ -798,14 +808,12 @@ body{display:grid;place-items:center;}
 
   <!-- ========== 班級浮層（選擇 + 管理，同一個 sheet） ========== -->
   <section class="sheet" id="classSheet">
-    <!-- 選擇模式：標題列 -->
     <header class="sheet-head mode-select">
       <div>
         <h2>選擇班級</h2>
       </div>
     </header>
 
-    <!-- 管理模式：標題列（含返回） -->
     <header class="sheet-head mode-manage">
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
         <button class="back-btn" id="btnBackFromManage" aria-label="返回">
@@ -817,18 +825,13 @@ body{display:grid;place-items:center;}
       </div>
     </header>
 
-    <!-- 選擇模式：列表 -->
     <div class="sheet-list mode-select" id="classList"></div>
-
-    <!-- 管理模式：列表 -->
     <div class="sheet-list mode-manage" id="classManageList"></div>
 
-    <!-- 選擇模式：底部 -->
     <div class="sheet-foot mode-select">
       <button class="big-btn" id="btnManageClasses">管理班級</button>
     </div>
 
-    <!-- 管理模式：底部 -->
     <div class="sheet-foot mode-manage">
       <div class="backup-row">
         <button class="bak-btn" id="btnAddClass">
@@ -1256,6 +1259,7 @@ function loadClassStudents(){
    ========================================================= */
 const phone       = document.getElementById('phone');
 const canvas      = document.getElementById('fx');
+const animLayer   = document.getElementById('animLayer');
 const ctx2d       = canvas.getContext('2d');
 const grid        = document.getElementById('grid');
 const hud         = document.getElementById('hud');
@@ -1416,7 +1420,7 @@ function showConfirm(title, sub, cb){
 }
 
 /* =========================================================
-   渲染：主網格
+   渲染
    ========================================================= */
 function sortedStudents(){
   return [...students].sort((a, b) => {
@@ -1515,39 +1519,55 @@ function attachCardEvents(card, s){
 }
 
 /* =========================================================
-   簽到
+   簽到（使用 animLayer，動畫不裁切）
    ========================================================= */
 function doSignIn(card, s){
   if(s.time) return;
 
+  /* 取得卡片相對於 #phone 的位置 */
+  const phoneRect = phone.getBoundingClientRect();
+  const r = card.getBoundingClientRect();
+
+  /* 在原位做一個克隆，放到 animLayer 中播放動畫 */
+  const clone = card.cloneNode(true);
+  clone.style.left = (r.left - phoneRect.left) + 'px';
+  clone.style.top  = (r.top  - phoneRect.top ) + 'px';
+  clone.style.width  = r.width  + 'px';
+  clone.style.height = r.height + 'px';
+  clone.style.animation = 'popOut .5s cubic-bezier(.3,.9,.4,1) forwards';
+  clone.classList.remove('pressing');
+  animLayer.appendChild(clone);
+
+  /* 原卡片暫時隱藏，動畫結束後變成已簽到狀態 */
+  card.style.visibility = 'hidden';
+
+  /* 更新資料 */
   s.time = nowTime();
   undoStack.push(s.id);
   save();
   updateHud();
   updateUndoBtn();
 
-  card.classList.remove('pressing');
-  card.classList.add('popping');
-
+  /* 粒子與音效 */
   const cr = canvas.getBoundingClientRect();
-  const r  = card.getBoundingClientRect();
   const cx = r.left - cr.left + r.width / 2;
   const cy = r.top  - cr.top  + r.height / 2;
 
   Sound.signIn();
   vibrate([10, 26, 14]);
-
   setTimeout(() => burst(cx, cy, 28), 80);
 
+  /* 動畫結束：移除克隆、恢復原卡片並標記完成 */
   setTimeout(() => {
-    card.classList.remove('popping');
+    clone.remove();
+    card.style.visibility = '';
     card.classList.add('done');
     card.innerHTML = doneInnerHtml(s);
 
     if(students.length && students.every(x => x.time)){
       celebrate();
     }
-  }, 480);
+  }, 500);
 }
 
 function celebrate(){
@@ -1566,7 +1586,7 @@ function celebrate(){
 }
 
 /* =========================================================
-   撤銷
+   撤銷（使用 animLayer）
    ========================================================= */
 function updateUndoBtn(){
   btnUndo.disabled = undoStack.length === 0;
@@ -1587,16 +1607,29 @@ function undoLast(){
 
       const card = grid.querySelector('[data-id="' + id + '"]');
       if(card){
+        /* 先把卡片恢復成「未簽到」的內容與事件 */
         card.classList.remove('done');
-        card.classList.add('restoring');
-        card.style.setProperty('--i', 0);
         card.innerHTML =
           '<span class="num">' + escapeHtml(s.num) + '</span>' +
           '<span class="name">' + escapeHtml(s.name) + '</span>';
         attachCardEvents(card, s);
 
+        /* 用克隆播放恢復動畫 */
+        const phoneRect = phone.getBoundingClientRect();
+        const r = card.getBoundingClientRect();
+
+        const clone = card.cloneNode(true);
+        clone.style.left = (r.left - phoneRect.left) + 'px';
+        clone.style.top  = (r.top  - phoneRect.top ) + 'px';
+        clone.style.width  = r.width  + 'px';
+        clone.style.height = r.height + 'px';
+        clone.style.animation = 'restoreIn .5s cubic-bezier(.34,1.56,.64,1) forwards';
+        animLayer.appendChild(clone);
+
+        card.style.visibility = 'hidden';
+
+        /* 粒子 */
         const cr = canvas.getBoundingClientRect();
-        const r  = card.getBoundingClientRect();
         if(r.width){
           burst(
             r.left - cr.left + r.width / 2,
@@ -1605,7 +1638,10 @@ function undoLast(){
           );
         }
 
-        setTimeout(() => card.classList.remove('restoring'), 520);
+        setTimeout(() => {
+          clone.remove();
+          card.style.visibility = '';
+        }, 500);
       }
       return;
     }
@@ -1629,9 +1665,6 @@ function updateHud(){
   hud.classList.toggle('complete', total > 0 && done === total);
 }
 
-/* =========================================================
-   班級標籤更新
-   ========================================================= */
 function updateClassLabel(){
   const cls = getCurrentClass();
   classNameLabel.textContent = cls ? cls.name : '未選擇';
@@ -1641,7 +1674,7 @@ function updateClassLabel(){
 }
 
 /* =========================================================
-   設定頁（學生名單）
+   設定頁（學生名單，按學號排序）
    ========================================================= */
 function renderSettings(){
   updateClassLabel();
@@ -1701,7 +1734,7 @@ function renderSettings(){
 }
 
 /* =========================================================
-   班級選擇列表
+   班級列表
    ========================================================= */
 function renderClassList(){
   classList.innerHTML = '';
@@ -1735,9 +1768,6 @@ function renderClassList(){
   classList.appendChild(frag);
 }
 
-/* =========================================================
-   班級管理列表（每行可匯出）
-   ========================================================= */
 function renderClassManageList(){
   classManageList.innerHTML = '';
   const frag = document.createDocumentFragment();
@@ -1873,7 +1903,7 @@ async function deleteClass(id){
 }
 
 /* =========================================================
-   Sheet 開關 + 班級 Sheet 內模式切換
+   Sheet 開關 + 模式切換
    ========================================================= */
 function openSheet(sheet){ sheet.classList.add('open'); }
 function closeSheet(sheet){
@@ -1935,7 +1965,7 @@ function exportClassFile(cls){
 }
 
 /* =========================================================
-   匯入：解析
+   匯入：解析 + 處理
    ========================================================= */
 function extractClasses(parsed){
   if(!parsed) return [];
@@ -1970,9 +2000,6 @@ function extractClasses(parsed){
   return [];
 }
 
-/* =========================================================
-   匯入處理
-   ========================================================= */
 function handleImportFile(file, mode){
   const reader = new FileReader();
   reader.onload = () => {
@@ -2074,10 +2101,8 @@ function bindUI(){
   document.addEventListener('touchstart', unlock, { once:true, passive:true });
   document.addEventListener('mousedown', unlock, { once:true });
 
-  /* --- 撤銷 --- */
   btnUndo.addEventListener('click', undoLast);
 
-  /* --- 重置 --- */
   document.getElementById('btnReset').addEventListener('click', () => {
     Sound.press();
     vibrate(10);
@@ -2110,7 +2135,6 @@ function bindUI(){
     toast('已重置全部紀錄');
   });
 
-  /* --- 設定頁 --- */
   document.getElementById('btnSettings').addEventListener('click', () => {
     Sound.press();
     vibrate(8);
@@ -2128,40 +2152,40 @@ function bindUI(){
     updateUndoBtn();
   });
 
+  /* --- 新增學生：只滾動 sheet-list，不影響整個頁面 --- */
   document.getElementById('btnAdd').addEventListener('click', () => {
-  const maxNum = students.reduce((m, s) => {
-    const n = Number(s.num);
-    return isNaN(n) ? m : Math.max(m, n);
-  }, 0);
-  students.push({ id: uid(), num: maxNum + 1, name: '', time: null });
-  save();
-  renderSettings();
-  Sound.press();
+    const maxNum = students.reduce((m, s) => {
+      const n = Number(s.num);
+      return isNaN(n) ? m : Math.max(m, n);
+    }, 0);
+    students.push({ id: uid(), num: maxNum + 1, name: '', time: null });
+    save();
+    renderSettings();
+    Sound.press();
 
-  /* 只滾動 sheet-list 內部，不影響頁面其他部分 */
-  requestAnimationFrame(() => {
-    try{
-      studentList.scrollTo({ top: studentList.scrollHeight, behavior: 'smooth' });
-    }catch(_){
-      studentList.scrollTop = studentList.scrollHeight;
+    /* 只滾動 sheet-list 內部 */
+    requestAnimationFrame(() => {
+      try{
+        studentList.scrollTo({ top: studentList.scrollHeight, behavior: 'smooth' });
+      }catch(_){
+        studentList.scrollTop = studentList.scrollHeight;
+      }
+    });
+
+    /* focus 時 preventScroll，避免 iOS 自動捲動整個頁面 */
+    const last = studentList.lastElementChild;
+    if(last){
+      setTimeout(() => {
+        const inp = last.querySelector('.sname');
+        if(inp){
+          try{ inp.focus({ preventScroll: true }); }
+          catch(_){ inp.focus(); }
+        }
+      }, 360);
     }
+    vibrate(8);
   });
 
-  /* focus 時 preventScroll，避免 iOS 自動捲動整個頁面 */
-  const last = studentList.lastElementChild;
-  if(last){
-    setTimeout(() => {
-      const inp = last.querySelector('.sname');
-      if(inp){
-        try{ inp.focus({ preventScroll: true }); }
-        catch(_){ inp.focus(); }
-      }
-    }, 360);
-  }
-  vibrate(8);
-});
-
-  /* --- 設定頁：匯出本班 / 匯入到本班 --- */
   document.getElementById('btnExport').addEventListener('click', () => {
     const cls = getCurrentClass();
     if(!cls){ Sound.nope(); return; }
@@ -2175,7 +2199,6 @@ function bindUI(){
     fileInput.click();
   });
 
-  /* --- 班級選擇 --- */
   document.getElementById('btnClass').addEventListener('click', () => {
     Sound.press();
     vibrate(8);
@@ -2183,20 +2206,17 @@ function bindUI(){
     openSheet(classSheet);
   });
 
-  /* --- 切換到管理模式（同一個 sheet 內） --- */
   document.getElementById('btnManageClasses').addEventListener('click', () => {
     Sound.press();
     vibrate(8);
     showManageMode();
   });
 
-  /* --- 從管理模式返回選擇模式 --- */
   document.getElementById('btnBackFromManage').addEventListener('click', () => {
     Sound.press();
     showSelectMode();
   });
 
-  /* --- 管理模式的「完成」：直接關閉 sheet --- */
   document.getElementById('btnCloseClassManage').addEventListener('click', () => {
     Sound.press();
     closeSheet(classSheet);
@@ -2214,7 +2234,6 @@ function bindUI(){
     fileInput.click();
   });
 
-  /* --- 檔案選擇器 --- */
   fileInput.addEventListener('change', (e) => {
     const f = e.target.files && e.target.files[0];
     e.target.value = '';
@@ -2222,7 +2241,6 @@ function bindUI(){
     handleImportFile(f, pendingImportMode || 'replace-current');
   });
 
-  /* --- 通用確認彈窗 --- */
   document.getElementById('confirmCancel').addEventListener('click', () => {
     Sound.press();
     confirmMask.classList.remove('show');
@@ -2243,7 +2261,6 @@ function bindUI(){
     }
   });
 
-  /* --- 視窗尺寸 --- */
   if(window.ResizeObserver){
     new ResizeObserver(resizeCanvas).observe(canvas);
   }
